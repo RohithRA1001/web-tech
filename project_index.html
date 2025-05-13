@@ -1,0 +1,142 @@
+<?php
+// Initialize variables
+$uploadStatus = "";
+$resumeText = "";
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['resume'])) {
+    // File upload process
+    $uploadDirectory = 'uploads/';
+    $fileName = basename($_FILES['resume']['name']);
+    $uploadPath = $uploadDirectory . $fileName;
+    $fileType = strtolower(pathinfo($uploadPath, PATHINFO_EXTENSION));
+    
+    // Check if file is a PDF
+    if ($fileType == 'pdf') {
+        // Create uploads directory if it doesn't exist
+        if (!is_dir($uploadDirectory)) {
+            mkdir($uploadDirectory, 0777, true);
+        }
+
+        // Move the uploaded file to the uploads directory
+        if (move_uploaded_file($_FILES['resume']['tmp_name'], $uploadPath)) {
+            $uploadStatus = "File uploaded successfully!";
+            // Extract text from the uploaded PDF file
+            $resumeText = extractTextFromPdf($uploadPath);
+            // Here you would analyze the resumeText with AI models or predefined rules.
+            // For demo purposes, we just show the extracted text.
+        } else {
+            $uploadStatus = "Error uploading the file!";
+        }
+    } else {
+        $uploadStatus = "Only PDF files are allowed!";
+    }
+}
+
+// Function to extract text from PDF using a library like 'pdftotext' or 'fpdf'
+function extractTextFromPdf($pdfFilePath) {
+    // This is a placeholder function. You would use a library or API to extract text from PDF.
+    // Example: Using pdftotext (a tool to convert PDF content to plain text)
+    $text = shell_exec("pdftotext " . escapeshellarg($pdfFilePath) . " -");
+    return $text;
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .status {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+            height: 200px;
+            resize: none;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>AI Resume Analyzer</h1>
+        <p>Upload your resume (PDF) for analysis</p>
+        
+        <!-- Upload Form -->
+        <form action="" method="POST" enctype="multipart/form-data">
+            <label for="resume">Choose a resume (PDF):</label>
+            <input type="file" name="resume" id="resume" required accept=".pdf">
+            <button type="submit" name="submit">Upload</button>
+        </form>
+
+        <!-- Status Message -->
+        <?php if ($uploadStatus != ""): ?>
+            <div class="status <?php echo ($uploadStatus == 'File uploaded successfully!') ? 'success' : ''; ?>">
+                <p><?php echo $uploadStatus; ?></p>
+            </div>
+        <?php endif; ?>
+
+        <!-- Display Extracted Text -->
+        <?php if ($resumeText != ""): ?>
+            <h2>Extracted Resume Content:</h2>
+            <textarea readonly><?php echo htmlspecialchars($resumeText); ?></textarea>
+        <?php endif; ?>
+    </div>
+
+</body>
+</html>
